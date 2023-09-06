@@ -63,10 +63,9 @@ def upper_bound(buckets):
     le, count = buckets[i]
     if i == 0:
       return le
-    else:
-      le_prev, count_prev = buckets[i-1]
-      if count_prev < count:
-        return le
+    le_prev, count_prev = buckets[i-1]
+    if count_prev < count:
+      return le
 
 
 def parse_metrics_file(metrics_file):

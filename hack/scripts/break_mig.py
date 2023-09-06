@@ -58,10 +58,7 @@ def get_instances(master, ng):
         name = parts[0]
         if not name.startswith(ng):
             continue
-        ips = []
-        for p in parts[1:]:
-          if re.match('([0-9]{1,3}\.){3}[0-9]{1,3}', p):
-              ips.append(p)
+        ips = [p for p in parts[1:] if re.match('([0-9]{1,3}\.){3}[0-9]{1,3}', p)]
         # XXX: A VM has showed up, but it doesn't have internal and external ip
         # yet, let's just pretend we haven't seen it yet
         if len(ips) < 2:
@@ -73,11 +70,20 @@ def get_instances(master, ng):
 
 def break_node(master, instance, broken_ips, verbose):
     '''Add iptable rules to drop packets coming from ips used by a give node'''
-    print('Breaking node {}'.format(instance.name))
+    print(f'Breaking node {instance.name}')
     for ip in instance.ip:
         if verbose:
-            print('Blocking ip {} on master'.format(ip))
-        subprocess.call(['gcloud', 'compute', 'ssh', master, '--', 'sudo iptables -I INPUT 1 -p tcp -s {} -j DROP'.format(ip)])
+            print(f'Blocking ip {ip} on master')
+        subprocess.call(
+            [
+                'gcloud',
+                'compute',
+                'ssh',
+                master,
+                '--',
+                f'sudo iptables -I INPUT 1 -p tcp -s {ip} -j DROP',
+            ]
+        )
         broken_ips.add(ip)
 
 
@@ -127,8 +133,8 @@ def clean_up(master, broken, verbose):
     top of INPUT chain while this was running you will suffer.
     '''
     if verbose:
-        print('Cleaning up top {} iptable rules'.format(len(broken)))
-    for i in range(len(broken)):
+        print(f'Cleaning up top {len(broken)} iptable rules')
+    for _ in range(len(broken)):
         subprocess.call(['gcloud', 'compute', 'ssh', master, '--', 'sudo iptables -D INPUT 1'])
 
 
